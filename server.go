@@ -10,8 +10,15 @@ import (
 	"time"
 )
 
-var l []net.Conn //list for clients info
-////
+var l []net.Conn //list for clients connection info
+
+/************************************************************************
+* Function: handleConnection()
+* Purpose:  To handle messages from clients and add thier connection info
+*			to list
+* Input:    c - generic stream-oriented network connection  
+* Return:   None
+************************************************************************/
 func handleConnection(c net.Conn) {
 	fmt.Printf("Serving %s\n", c.RemoteAddr().String())
 	for {
@@ -20,22 +27,35 @@ func handleConnection(c net.Conn) {
 			fmt.Println(err)
 			return
 		}
-		//fmt.Println(netData)
 
 		l = append(l, c)
 
 		temp := strings.TrimSpace(string(netData))
+		//terminate message from client
 		if temp == "STOP" {
 			break
 		}
-		length := len(temp)
-		result := "ACK " + strconv.Itoa(length) + "\n"
-		c.Write([]byte(string(result)))
+		//still alive message from client
+		else if temp == "OK" { 
+
+		}
+		//any other message from client
+		else {
+			length := len(temp)
+			result := "ACK " + strconv.Itoa(length) + "\n"
+			c.Write([]byte(string(result)))		
+		}
+
 	}
 	c.Close()
 }
 
-
+/************************************************************************
+* Function: checkConnection()
+* Purpose:  To check wich clients still connected
+* Input:    None 
+* Return:   None
+************************************************************************/
 func checkConnection(){
 
 	for {
@@ -45,6 +65,10 @@ func checkConnection(){
 		time.Sleep(time.Second * 5)	
 	}
 }
+
+
+
+
 
 func main() {
 	arguments := os.Args

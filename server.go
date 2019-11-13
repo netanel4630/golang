@@ -8,7 +8,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sync"
+    "sync/atomic"
 )
+//for sync messages between every 5 second and after user send a message
+ var mutex = &sync.Mutex{}
 
 type client struct {
     address string
@@ -44,14 +48,14 @@ func addClientToList(c client) {
 
 /************************************************************************
 * Function: editStillAlive()
-* Purpose:  change isAlive to true
+* Purpose:  change isAlive status
 * Input:    address - Client address
 * Return:   None
 ************************************************************************/
-func editStillAlive(address string) {
+func editStillAlive(address string, aliveStatus bool) {
 	for i := 0; i < len(clients); i++{
 		if clients[i].c.RemoteAddr().String() == address {
-			clients[i].isAlive = true
+			clients[i].isAlive = aliveStatus
 			break
 		}
 	}
@@ -70,7 +74,8 @@ func handleConnection(c net.Conn) {
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
-			fmt.Println(err)
+			editStillAlive(c.RemoteAddr().String(), false)
+			//fmt.Println(err)
 			return
 		}		
 
@@ -79,16 +84,9 @@ func handleConnection(c net.Conn) {
 		if temp == "STOP" {
 			break
 		}
-		//still alive message from client
-		if temp == "Still Alive"{
-				fmt.Println("if temp == Still Alive")
-				editStillAlive(c.RemoteAddr().String())
-		} else {
-			length := len(temp)
-			result := "ACK " + strconv.Itoa(length) + "\n"
-			c.Write([]byte(string(result)))	
-		} 
-			//any other message from client
+		length := len(temp)
+		result := "ACK " + strconv.Itoa(length) + "\n"
+		c.Write([]byte(string(result)))	
 	}
 	c.Close()
 }
@@ -101,6 +99,7 @@ func handleConnection(c net.Conn) {
 * Return:   None
 ************************************************************************/
 func printClientsStatus(addresses []string, status string){
+	fmt.Println("\n\n")	
 	fmt.Println(status)
 	for i := 0; i < len(addresses); i++ {
 		fmt.Println(addresses[i])
@@ -121,38 +120,18 @@ func checkConnection(){
 	for {
 		for i := 0; i < len(clients); i++ {
 			if clients[i].isAlive == true {
-				clients[i].isAlive = false
 				conn = append(conn, clients[i].c.RemoteAddr().String())			
 			} else {
 				notConn = append(notConn, clients[i].c.RemoteAddr().String())	
 			}
-			fmt.Println(len(clients))
-		}		
+		}
 		printClientsStatus(conn, "Active Clients")
-		fmt.Println("\n\n")
 		printClientsStatus(notConn, "Non-Active Clients")
 		conn = temp
 		notConn = temp
 		time.Sleep(time.Second * 5)	
 	}
 }
-
-/************************************************************************
-* Function: sendStillAliveMessage()
-* Purpose:  Send still alive message
-* Input:    None 
-* Return:   None
-************************************************************************/
-func sendStillAliveMessage(){
-	for{
-		for i := 0; i < len(clients); i++ {
-			clients[i].c.Write([]byte(string("is Alive?")))
-		}
-		time.Sleep(time.Second * 5)
-	}
-
-}
-
 
 func main() {
 	arguments := os.Args
@@ -169,9 +148,6 @@ func main() {
 	}
 	defer l.Close()
 
-	//call the goroutine  to send still alive message
-	go sendStillAliveMessage();
-	time.Sleep(time.Second * 1)
 	//call the goroutine  to check connection
 	go checkConnection();
 

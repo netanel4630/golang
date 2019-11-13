@@ -18,6 +18,7 @@ func main() {
     fmt.Fprintf(conn, text + "\n")
     // listen for reply
     message, _ := bufio.NewReader(conn).ReadString('\n')
-    fmt.Print("Message from server: "+message)
+    fmt.Print(message[4:])
+      //fmt.Print("Message from server: "+message)  -> I think its better format, but I follow your order
   }
 }

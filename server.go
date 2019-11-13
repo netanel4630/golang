@@ -4,11 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 	"time"
-)
+) 
 
 type client struct {
     address string
@@ -16,6 +15,9 @@ type client struct {
     isAlive bool
 }
 
+const INTERVAL_PRINTS = 5
+const PROTOCOL = "tcp"
+const PORT = ":8081"
 var clients []client //list for clients connection info
 
 /************************************************************************
@@ -80,10 +82,12 @@ func handleConnection(c net.Conn) {
 		if temp == "STOP" {
 			break
 		}
+		fmt.Println("\n" + temp)
 		length := len(temp)
 		result := "ACK " + strconv.Itoa(length) + "\n"
 		c.Write([]byte(string(result)))	
 	}
+	editStillAlive(c.RemoteAddr().String(), false)
 	c.Close()
 }
 
@@ -125,19 +129,12 @@ func checkConnection(){
 		printClientsStatus(notConn, "Non-Active Clients")
 		conn = temp
 		notConn = temp
-		time.Sleep(time.Second * 5)	
+		time.Sleep(time.Second * INTERVAL_PRINTS)	
 	}
 }
 
 func main() {
-	arguments := os.Args
-	if len(arguments) == 1 {
-		fmt.Println("Please provide a port number!")
-		return
-	}
-
-	PORT := ":" + arguments[1]
-	l, err := net.Listen("tcp4", PORT)
+	l, err := net.Listen(PROTOCOL, PORT)
 	if err != nil {
 		fmt.Println(err)
 		return

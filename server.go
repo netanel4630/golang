@@ -8,11 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"sync"
-    "sync/atomic"
 )
-//for sync messages between every 5 second and after user send a message
- var mutex = &sync.Mutex{}
 
 type client struct {
     address string

@@ -13,7 +13,13 @@ const (
     INTERVAL_PRINTS = 100
 )
 
-func test(conn net.Conn) {
+/************************************************************************
+* Function: receiveMsg()
+* Purpose:  Receive message from Server
+* Input:    conn - connection info
+* Return:   None
+************************************************************************/
+func receiveMsg(conn net.Conn) {
   for{
     message, _ := bufio.NewReader(conn).ReadString('\n')
     if message[:4] == "NACK"{
@@ -33,7 +39,7 @@ func main() {
   var temp string
   // connect to this socket
   conn, _ := net.Dial("tcp", "127.0.0.1:8081")
-  go test(conn)
+  go receiveMsg(conn)
   fmt.Print("1 for send to Server, 2 for send to Client: ")
   for {
     // read in input from stdin

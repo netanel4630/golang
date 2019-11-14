@@ -92,7 +92,7 @@ func handleConnection(c net.Conn) {
 			result := "ACK " + strconv.Itoa(length - 1) + "\n"
 			c.Write([]byte(string(result)))	
 		} else{
-			result := "NACK "
+			result := "NACK " + "\n"
 			c.Write([]byte(string(result)))	
 		}		
 	}

@@ -23,14 +23,14 @@ func receiveMsg(conn net.Conn) {
   for{
     message, _ := bufio.NewReader(conn).ReadString('\n')
     if message[:4] == "NACK"{
-      fmt.Print("Client not exist or disconnected")
+      fmt.Print("\n")
+      fmt.Println("Client not exist or disconnected")
     } else {
       fmt.Print("\n")
       fmt.Print(message[4:])
-      fmt.Print("1 for send to Server, 2 for send to Client: ")
       //fmt.Print("Message from server: "+message)  -> I think its better format, but I follow your order
     }
-
+    fmt.Print("1 for send to Server, 2 for send to Client: ")
   }
 }
 
@@ -65,7 +65,7 @@ func main() {
         temp = strings.ReplaceAll(temp, "\n","")
         fmt.Fprintf(conn, SEND_TO_CLIENT + temp + "\n")
         temp = strings.ReplaceAll(temp, ";","")
-        fmt.Println(temp[1:] + "\n")
+        fmt.Println(temp + "\n")
     } else {
         fmt.Println("Error! please enter 1 or 2")
         fmt.Print("1 for send to Server, 2 for send to Client: ")

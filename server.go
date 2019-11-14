@@ -9,6 +9,11 @@ import (
 	"time"
 ) 
 
+const (
+    SEND_TO_SERVER = "1"
+    SEND_TO_CLIENT = "2"
+)
+
 type client struct {
     address string
     c net.Conn
@@ -67,30 +72,33 @@ func editStillAlive(address string, aliveStatus bool) {
 * Return:   None
 ************************************************************************/
 func handleConnection(c net.Conn) {
+
 	fmt.Printf("Serving %s\n", c.RemoteAddr().String())
 	addClientToList(initClient(c))
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
 			editStillAlive(c.RemoteAddr().String(), false)
-			//fmt.Println(err)
 			return
 		}		
-
 		temp := strings.TrimSpace(string(netData))
 		//terminate message from client
-		if temp == "STOP" {
+		if temp[1:] == "STOP" {
+			fmt.Println(temp[1:])
 			break
 		}
-		fmt.Println("\n" + temp)
-		length := len(temp)
-		result := "ACK " + strconv.Itoa(length) + "\n"
-		c.Write([]byte(string(result)))	
+		if msg_parser(temp) == true {
+			length := len(temp)
+			result := "ACK " + strconv.Itoa(length - 1) + "\n"
+			c.Write([]byte(string(result)))	
+		} else{
+			result := "NACK "
+			c.Write([]byte(string(result)))	
+		}		
 	}
 	editStillAlive(c.RemoteAddr().String(), false)
 	c.Close()
 }
-
 
 /************************************************************************
 * Function: printClientsStatus()
@@ -131,6 +139,48 @@ func checkConnection(){
 		notConn = temp
 		time.Sleep(time.Second * INTERVAL_PRINTS)	
 	}
+}
+
+/************************************************************************
+* Function: msg_parser()
+* Purpose:  Parser Message
+* Input:    msg - message from client 
+* Return:   None
+************************************************************************/
+func msg_parser(msg string) bool{
+	var index int
+	var clientAdd string
+	var clientMSG string
+
+	if msg[:1] == SEND_TO_CLIENT{
+		index = strings.Index(msg, ";")
+		clientAdd = msg[1 : index]
+		clientMSG = msg[index + 1:]
+		return sendMsgToClient(clientAdd, clientMSG)
+ 	} else if msg[:1] == SEND_TO_SERVER{
+ 		fmt.Println(msg[1:])
+ 		return true
+ 	} else {
+ 		return false
+ 	}
+}
+
+/************************************************************************
+* Function: sendMsgToClient()
+* Purpose:  Send message from client to another
+* Input:    clientAdd - client adress to send
+*			clientMSG = message to send
+* Return:   None
+************************************************************************/
+func sendMsgToClient(clientAdd string, clientMSG string) bool {
+	for i := 0; i < len(clients); i++ {
+		if clients[i].c.RemoteAddr().String() == clientAdd{
+			sendClient := "ACK " + clientMSG + "\n"
+			clients[i].c.Write([]byte(string(sendClient)))
+			return true
+		}
+	}
+	return false
 }
 
 func main() {
